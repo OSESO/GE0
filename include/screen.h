@@ -1,8 +1,6 @@
 #ifndef __SCREEN_H__
 #define __SCREEN_H__
 
-#include <am.h>
-#include <klib-macros.h>
 #include <stdint.h>
 
 #define SCREEN_HEIGHT 128
