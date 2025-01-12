@@ -2,15 +2,16 @@
 #define __SCREEN_H__
 
 #include <stdint.h>
+#include "utils.h"
+// #define SCREEN_HEIGHT 128
+// #define SCREEN_WIDTH 128
 
-#define SCREEN_HEIGHT 128
-#define SCREEN_WIDTH 128
-#define SCREEN_WIDTH_BYTES 64
+#define SCREEN_WIDTH_BYTES          (GE0_SCREEN_WIDTH * 4 / 8) // Each pixel usse 4 bit
+#define SCREEN_WIDTH_BYTES_LOG      BITS_TO_REPRESENT(SCREEN_WIDTH_BYTES)
+#define SCREEN_SIZE                 (SCREEN_WIDTH_BYTES * GE0_SCREEN_HEIGHT)
+#define SCREEN_ARRAY_DEF            SCREEN_SIZE
 
-#define SCREEN_SIZE (SCREEN_HEIGHT * SCREEN_WIDTH_BYTES)
-#define SCREEN_ARRAY_DEF SCREEN_SIZE
-
-#define SCREEN_ADDR(x, y) (((y) << 6) + (x))
+#define SCREEN_ADDR(x, y)           (((y) << SCREEN_WIDTH_BYTES_LOG) + (x))
 
 struct sprite {
     uint16_t address;

@@ -7,7 +7,7 @@
 
 uint16_t rscreenWidth, rscreenHeight; // Real screen size
 uint16_t displayXOffset;              // Margin of the display area
-uint32_t pix_buffer[SCREEN_REAL_WIDTH];
+uint32_t pix_buffer[GE0_SCREEN_WIDTH];
 
 // 在GE0-YSYX中转换，ge0_port_interface接口应当统一使用RGB565颜色格式
 // static uint32_t rgb565_to_rgb888(uint16_t rgb565) {
@@ -22,22 +22,22 @@ uint32_t pix_buffer[SCREEN_REAL_WIDTH];
 // }
 
 void setScreenResolution(uint16_t nw, uint16_t nh) {
-    if (nw < SCREEN_REAL_WIDTH)
+    if (nw < GE0_SCREEN_WIDTH)
         rscreenWidth = nw;
     else
-        rscreenWidth = SCREEN_REAL_WIDTH - 1;
+        rscreenWidth = GE0_SCREEN_WIDTH - 1;
 
-    if (nh < SCREEN_REAL_HEIGHT)
+    if (nh < GE0_SCREEN_HEIGHT)
         rscreenHeight = nh;
     else
-        rscreenHeight = SCREEN_REAL_HEIGHT - 1;
+        rscreenHeight = GE0_SCREEN_HEIGHT - 1;
 
     if (rscreenWidth < 95)
         rscreenWidth = 95;
     if (rscreenHeight < 95)
         rscreenHeight = 95;
 
-    displayXOffset = (SCREEN_REAL_WIDTH - rscreenWidth) / 2;
+    displayXOffset = (GE0_SCREEN_WIDTH - rscreenWidth) / 2;
     for (int i = 0; i < 4; i++)
         line_is_draw[i] = 0xffffffff;
     am_display_fillScreen(0x0000);
@@ -47,8 +47,8 @@ void redrawScreen() { // todo: change the name to display. "screen" is for
                       // canvas only
     // left shift so we can use fix-point number
     // use (_ * _ratio) >> 16 for mapping
-    int x_ratio = (int)((SCREEN_WIDTH << 16) / rscreenWidth);
-    int y_ratio = (int)((SCREEN_HEIGHT << 16) / rscreenHeight);
+    int x_ratio = (int)((GE0_SCREEN_HEIGHT << 16) / rscreenWidth);
+    int y_ratio = (int)((GE0_SCREEN_HEIGHT << 16) / rscreenHeight);
     int x_canvas, hx2, y_canvas, startx;
     // Since each line in canvas might be mapped to mutiple
     // lines in display. This could reduce the compution need for redraw
