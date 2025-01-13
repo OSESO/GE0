@@ -9,18 +9,6 @@ uint16_t rscreenWidth, rscreenHeight; // Real screen size
 uint16_t displayXOffset;              // Margin of the display area
 uint32_t pix_buffer[SCREEN_REAL_WIDTH];
 
-// 在GE0-YSYX中转换，ge0_port_interface接口应当统一使用RGB565颜色格式
-// static uint32_t rgb565_to_rgb888(uint16_t rgb565) {
-//     // See https://stackoverflow.com/a/2445096
-//     uint8_t r = (rgb565 >> 11) & 0x1F;
-//     uint8_t g = (rgb565 >> 5) & 0x3F;
-//     uint8_t b = rgb565 & 0x1F;
-//     r = (r << 3) | (r >> 2);
-//     g = (g << 2) | (g >> 4);
-//     b = (b << 3) | (b >> 2);
-//     return (r << 16) | (g << 8) | b;
-// }
-
 void setScreenResolution(uint16_t nw, uint16_t nh) {
     if (nw < SCREEN_REAL_WIDTH)
         rscreenWidth = nw;
@@ -40,7 +28,7 @@ void setScreenResolution(uint16_t nw, uint16_t nh) {
     displayXOffset = (SCREEN_REAL_WIDTH - rscreenWidth) / 2;
     for (int i = 0; i < 4; i++)
         line_is_draw[i] = 0xffffffff;
-    am_display_fillScreen(0x0000);
+    ge0_port_display_fillScreen(0x0000);
 }
 
 void redrawScreen() { // todo: change the name to display. "screen" is for
@@ -84,15 +72,12 @@ void redrawScreen() { // todo: change the name to display. "screen" is for
                                          0xf0) >>
                                         4];
                     }
-                    // 应该在GE0-YSYX中进行转换，ge0_port_interface接口应当统一使用RGB565颜色格式
-                    // pix_buffer[x_physical] =
-                    //     rgb565_to_rgb888(pix_buffer[x_physical]);
                 }
             prev_y_canvas = y_canvas;
-            am_display_drawLine(y_physical, startx, rscreenWidth, pix_buffer);
+            ge0_port_display_drawLine(y_physical, startx, rscreenWidth, pix_buffer);
         }
     }
-    am_display_sync();
+    ge0_port_display_sync();
     for (uint16_t i = 0; i < 4; i++)
         line_is_draw[i] = 0;
 }

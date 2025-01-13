@@ -15,7 +15,7 @@ static uint32_t rgb565_to_rgb888(uint16_t rgb565) {
     return (r << 16) | (g << 8) | b;
 }
 
-void am_display_fillScreen(uint16_t color){
+void ge0_port_display_fillScreen(uint16_t color){
     //  todo: read those two only one time
     int height = io_read(AM_GPU_CONFIG).height;
     int width = io_read(AM_GPU_CONFIG).width;
@@ -31,11 +31,12 @@ void am_display_fillScreen(uint16_t color){
     free(empty_buffer);
 }
 
-void am_display_drawLine(uint32_t line, uint32_t start, uint32_t width, uint32_t *colors){
-    // TODO 转换RGB888
+void ge0_port_display_drawLine(uint32_t line, uint32_t start, uint32_t width, uint32_t *colors){
+    for(uint32_t i=0;i<width;++i)
+        colors[i] = rgb565_to_rgb888[i];
     io_write(AM_GPU_FBDRAW, start, line, buf, width, 1, 0);
 }
 
-void am_display_sync(void){
+void ge0_port_display_sync(void){
     io_write(AM_GPU_FBDRAW, 0, 0, NULL, 0, 0, 1);
 }
