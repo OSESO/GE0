@@ -33,7 +33,7 @@ void ge0_port_display_fillScreen(uint16_t color){
 
 void ge0_port_display_drawLine(uint32_t line, uint32_t start, uint32_t width, uint32_t *colors){
     for(uint32_t i=0;i<width;++i)
-        colors[i] = rgb565_to_rgb888[i];
+        colors[i] = rgb565_to_rgb888(colors[i]);
     io_write(AM_GPU_FBDRAW, start, line, buf, width, 1, 0);
 }
 
