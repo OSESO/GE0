@@ -8,7 +8,7 @@
  * 
  * @param color 填充颜色，格式：16 bit color(rgb565)
  */
-void am_display_fillScreen(uint16_t color);
+void ge0_port_display_fillScreen(uint16_t color);
 
 /**
  * @brief 
@@ -18,12 +18,12 @@ void am_display_fillScreen(uint16_t color);
  * @param width 线长
  * @param colors 填充颜色缓冲，格式：16 bit color(rgb565)
  */
-void am_display_drawLine(uint32_t line, uint32_t start, uint32_t width, uint32_t *colors);
+void ge0_port_display_drawLine(uint32_t line, uint32_t start, uint32_t width, uint32_t *colors);
 
 /**
  * @brief 同步
  * 
  */
-void am_display_sync(void);
+void ge0_port_display_sync(void);
 
 #endif // ge0_port_interface_H_
