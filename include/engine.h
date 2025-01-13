@@ -67,12 +67,12 @@ void scroll(int dir);
 /**
    delays the redrawing of the Screen for a small period of time
 */
-void delayredraw();
+void delayredraw(void);
 
 /**
    Clears the entire screen with the color setbgcolor. Does not affect sprites.
 */
-void clearscreen();
+void clearscreen(void);
 
 /**
     Changes the framerate in the range of 1-40 frames per second.

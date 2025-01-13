@@ -1,7 +1,6 @@
 #include "screen.h"
 #include "engine.h"
 #include "font_a.h"
-#include <klib-macros.h>
 
 // This file includes functions to control the canvas in engine
 
@@ -113,7 +112,7 @@ void setCharX(int8_t x) { regx = x; }
 
 void setCharY(int8_t y) { regy = y; }
 
-void drawImgS(uint8_t *image, int16_t x, int16_t y, int32_t w, int32_t h) {
+static void drawImgS(uint8_t *image, int16_t x, int16_t y, int32_t w, int32_t h) {
     uint32_t p, x2, y2, color, s, endx;
     s = imageSize;
     endx = ((w * s) >> fixed_res_bit);
@@ -338,7 +337,7 @@ void scrollScreen(uint8_t step, uint8_t direction) {
     if (tile.adr > 0 && !isClip)
         tileDrawLine(step, direction);
 }
-void drawImageBitS(uint8_t *img, int16_t x, int16_t y, int16_t w, int16_t h) {
+static void drawImageBitS(uint8_t *img, int16_t x, int16_t y, int16_t w, int16_t h) {
     uint32_t p, x2, y2, s;
     s = imageSize;
     for (int32_t yi = 0; yi < ((h * s) >> fixed_res_bit); yi++) {
@@ -379,7 +378,7 @@ void drawImageBit(uint8_t *image, int16_t x1, int16_t y1, int16_t w,
         }
 }
 
-void drawImgRLES(uint8_t *image, int16_t x1, int16_t y1, int16_t w, int16_t h) {
+static void drawImgRLES(uint8_t *image, int16_t x1, int16_t y1, int16_t w, int16_t h) {
     int16_t i = 0;
     uint8_t jx, jy;
     uint8_t repeat = *(image);

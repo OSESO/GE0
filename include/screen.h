@@ -1,7 +1,6 @@
 #ifndef __SCREEN_H__
 #define __SCREEN_H__
 
-#include <am.h>
 #include <engine.h>
 #include <stdint.h>
 
