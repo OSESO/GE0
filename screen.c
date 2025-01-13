@@ -1,7 +1,6 @@
 #include "screen.h"
 #include "engine.h"
 #include "font_a.h"
-#include <klib-macros.h>
 
 // This file includes functions to control the canvas in engine
 
