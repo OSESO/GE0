@@ -1,6 +1,7 @@
 #ifndef __SCREEN_H__
 #define __SCREEN_H__
 
+#include <engine.h>
 #include <stdint.h>
 
 #define SCREEN_HEIGHT 128
@@ -27,7 +28,7 @@ struct sprite {
     int16_t angle;
     int8_t lives;
     int8_t collision;
-    uint8_t flags; // 8 - 4 color 3 fliphorizontal 2 isonebit 1 scrolled 0 solid
+    uint8_t flags; // 8 ~ 4 color 3 fliphorizontal 2 isonebit 1 scrolled 0 solid
     int8_t gravity;
     uint16_t oncollision;
     uint16_t onexitscreen;
@@ -63,4 +64,22 @@ void scrollScreen(uint8_t step, uint8_t direction);
 void drawImg(uint8_t *image, int16_t x, int16_t y, int16_t w, int16_t h);
 void drawImageBit(uint8_t *image, int16_t x1, int16_t y1, int16_t w, int16_t h);
 void drawImgRLE(uint8_t *image, int16_t x1, int16_t y1, int16_t w, int16_t h);
+int16_t getSpriteValue(uint16_t n, SpriteAttribute t);
+void setSpriteValue(uint16_t n, SpriteAttribute t, int16_t v);
+int16_t angleBetweenSprites(uint16_t n1, uint16_t n2);
+void setSpr(uint16_t n, uint16_t adr);
+void setSprPosition(uint16_t n, uint16_t x, uint16_t y);
+void spriteSetDirectionAndSpeed(uint16_t n, uint16_t speed, int16_t dir);
+int16_t getSpriteInXY(int16_t x, int16_t y);
+uint8_t getPix(uint8_t x, uint8_t y);
+void drwLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
+void drwRect(int16_t x0, int16_t y0, int16_t x1, int16_t y1);
+void fllRect(int16_t x0, int16_t y0, int16_t x1, int16_t y1);
+void drwTriangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2,
+                 uint16_t x3, uint16_t y3);
+void fllTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1,
+                 uint16_t x2, uint16_t y2);
+void drwCirc(int16_t x0, int16_t y0, int16_t r);
+void fllCirc(int16_t x0, int16_t y0, int16_t r);
+void printc(char c, uint8_t fc, uint8_t bc);
 #endif
