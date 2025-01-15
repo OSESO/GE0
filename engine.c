@@ -95,7 +95,7 @@ void putpixel(int x, int y) { setPix(x, y, color); }
 
 int getpixel(int x, int y) { return getPix(x, y); }
 
-void line(int x, int y, int x1, int y1) { drwLine(x1, y1, x1, y1); }
+void line(int x, int y, int x1, int y1) { drwLine(x, y, x1, y1); }
 
 void rect(int x, int y, int x1, int y1) { drwRect(x, y, x1, y1); }
 
@@ -113,14 +113,14 @@ void circle(int x, int y, int r) { drwCirc(x, y, r); }
 
 void fillcircle(int x, int y, int r) { fllCirc(x, y, r); }
 char putchar(char c) {
-    printc(c, color, bgcolor);
+    printc(c);
     return c;
 }
 
 int puts(char *message) {
     int j = 0;
     while (*(message + j) != 0 && j <= 1000) {
-        printc(*(message + j), color, bgcolor);
+        printc(*(message + j));
     }
     return 0;
 }
@@ -137,21 +137,21 @@ int putn(int number) {
     }
     int j = 0;
     while (s_buffer[j]) {
-        printc(s_buffer[j], color, bgcolor);
+        printc(s_buffer[j]);
         j++;
     }
     return 0;
 }
 
-void printfix(int16_t value, uint8_t fc, uint8_t bc) {
+void printfix(int16_t value) {
     char sbuffer[10];
     const uint16_t fractPartMask = (1 << fixed_res_bit) - 1;
     int16_t j;
     if (value == 0) {
-        printc('0', color, bgcolor);
+        printc('0');
     }
     if (value < 0) {
-        printc('-', color, bgcolor);
+        printc('-');
         value = (~value) + 1;
     }
     int16_t intPart = value >> fixed_res_bit;
@@ -161,7 +161,7 @@ void printfix(int16_t value, uint8_t fc, uint8_t bc) {
     itoa(intPart, sbuffer, 10);
     j = 0;
     while (sbuffer[j]) {
-        printc(sbuffer[j], color, bgcolor);
+        printc(sbuffer[j]);
         j++;
     }
     char *ptr = sbuffer;
@@ -182,7 +182,7 @@ void printfix(int16_t value, uint8_t fc, uint8_t bc) {
     }
     j = 0;
     while (sbuffer[j]) {
-        printc(sbuffer[j], color, bgcolor);
+        printc(sbuffer[j]);
         j++;
     }
 }
@@ -206,10 +206,10 @@ int printf(char *formatString, ...) {
                 putchar((char)va_arg(args, int));
                 break;
             case 's':
-                puts(va_arg(args, const char *));
+                puts(va_arg(args, char *));
                 break;
             case 'f':
-                printfix((fixed)va_arg(args, int), color, bgcolor);
+                printfix((fixed)va_arg(args, int));
                 break;
             default:
                 puts("Unsupported format");
@@ -349,6 +349,7 @@ static int16_t isqrt(int16_t n) {
 short distance(short x1, short y1, short x2, short y2) {
     return isqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 }
+
 #ifdef MEMORY_BY_GE0
 int *malloc(int size) { return ge0_port_malloc(size); }
 
@@ -357,5 +358,4 @@ void free(int *array) { ge0_port_free(array); }
 void memcpy(int *array1, int *array2, int size) {
     ge0_port_memcpy(array1, array2, size);
 }
-
 #endif // MEMORY_BY_GE0

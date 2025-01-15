@@ -435,7 +435,6 @@ short distance(short x1, short y1, short x2, short y2);
 // *****************************
 // Working with memory
 // *****************************
-#define MEMORY_BY_GE0
 #ifdef MEMORY_BY_GE0
 /**
  * Allocates memory by returning a pointer or 0 if no memory was allocated.

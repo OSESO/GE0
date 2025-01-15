@@ -167,11 +167,11 @@ static void drawImgS(uint8_t *image, int16_t x, int16_t y, int32_t w,
     uint32_t p, x2, y2, color, s, endx;
     s = imageSize;
     endx = ((w * s) >> fixed_res_bit);
-    for (int32_t yi = 0; yi < ((h * s) >> fixed_res_bit); yi++) {
+    for (uint32_t yi = 0; yi < ((h * s) >> fixed_res_bit); yi++) {
         y2 = ((yi << fixed_res_bit) + 1) / s;
         if ((y + yi) > 128)
             return;
-        for (int32_t xi = 0; xi < endx; xi++) {
+        for (uint32_t xi = 0; xi < endx; xi++) {
             x2 = ((xi << fixed_res_bit) + 1) / s;
             if (x2 & 1) {
                 p = *(image + x2 / 2 + (y2 * w) / 2);
@@ -228,7 +228,7 @@ void tileDrawLine(uint8_t step, uint8_t direction) {
                 ny = y0 + y * tileMap.tile_height;
                 if (ny > -tileMap.map_height && ny < 128) {
                     tile_adr = tileMap.adr[x + y * tileMap.map_width];
-                    if (tile_adr > 0)
+                    if (tile_adr != 0)
                         drawImg(tile_adr, nx, ny, tileMap.tile_width,
                                 tileMap.tile_height);
                     else
@@ -255,7 +255,7 @@ void tileDrawLine(uint8_t step, uint8_t direction) {
                 nx = x0 + x * tileMap.tile_width;
                 if (nx > -tileMap.map_width && nx < 128) {
                     tile_adr = tileMap.adr[x + y * tileMap.map_width];
-                    if (tile_adr > 0)
+                    if (tile_adr != 0)
                         drawImg(tile_adr, nx, ny, tileMap.tile_width,
                                 tileMap.tile_height);
                     else
@@ -274,7 +274,7 @@ void tileDrawLine(uint8_t step, uint8_t direction) {
                 ny = y0 + y * tileMap.tile_height;
                 if (ny > -tileMap.map_height && ny < 128) {
                     tile_adr = tileMap.adr[x + y * tileMap.map_width];
-                    if (tile_adr > 0)
+                    if (tile_adr != 0)
                         drawImg(tile_adr, nx, ny, tileMap.tile_width,
                                 tileMap.tile_height);
                     else
@@ -301,7 +301,7 @@ void tileDrawLine(uint8_t step, uint8_t direction) {
                 nx = x0 + x * tileMap.tile_width;
                 if (nx > -tileMap.map_width && nx < 128) {
                     tile_adr = tileMap.adr[x + y * tileMap.map_width];
-                    if (tile_adr > 0)
+                    if (tile_adr != 0)
                         drawImg(tile_adr, nx, ny, tileMap.tile_width,
                                 tileMap.tile_height);
                     else
@@ -383,18 +383,18 @@ void scrollScreen(uint8_t step, uint8_t direction) {
                 sprite_table[n].previousy += 4;
             }
     }
-    if (tileMap.adr > 0 && !isClip)
+    if (tileMap.adr != 0 && !isClip)
         tileDrawLine(step, direction);
 }
 static void drawImageBitS(uint8_t *img, int16_t x, int16_t y, int16_t w,
                           int16_t h) {
     uint32_t p, x2, y2, s;
     s = imageSize;
-    for (int32_t yi = 0; yi < ((h * s) >> fixed_res_bit); yi++) {
+    for (uint32_t yi = 0; yi < ((h * s) >> fixed_res_bit); yi++) {
         y2 = ((yi << fixed_res_bit) + 1) / s;
         if ((y + yi) > 128)
             return;
-        for (int32_t xi = 0; xi < ((w * s) >> fixed_res_bit); xi++) {
+        for (uint32_t xi = 0; xi < ((w * s) >> fixed_res_bit); xi++) {
             x2 = ((xi << fixed_res_bit) + 1) / s;
             p = *(img + (x2 + y2 * w) / 8);
             if (p & (1 << (7 - ((x2 + y2 * w) & 7))))
@@ -1040,7 +1040,7 @@ void charLineUp(uint8_t n) {
 
 inline int8_t getCharY() { return char_y; }
 
-void printc(char c, uint8_t fc, uint8_t bc) {
+void printc(char c) {
     if (char_y > 15) {
         char_y = 15;
         charLineUp(1);
@@ -1131,7 +1131,7 @@ void drawTile(int16_t x0, int16_t y0) {
             if (nx >= -tileMap.map_width && nx < 128 &&
                 ny >= -tileMap.map_height && ny < 128) {
                 tile_adr = tileMap.adr[x + y * tileMap.map_width];
-                if (tile_adr > 0)
+                if (tile_adr != 0)
                     drawImg(tile_adr, nx, ny, tileMap.tile_width,
                             tileMap.tile_height);
             }
@@ -1148,7 +1148,7 @@ uint8_t *getTileInXY(int16_t x, int16_t y, uint8_t *collisionMapAdr) {
     p = ((x - tileMap.x) / (int16_t)tileMap.tile_width) +
         ((y - tileMap.y) / (int16_t)tileMap.tile_height *
          (int16_t)tileMap.map_width);
-    if (collisionMapAdr > 0) // This path is only used inside screen.c and the
+    if (collisionMapAdr != 0) // This path is only used inside screen.c and the
                              // return of this path should never be dereferenced
         if (collisionMapAdr[p / 8] & (1 << (7 - (p & 7)))) {
             return (uint8_t *)1;

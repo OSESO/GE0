@@ -77,7 +77,6 @@ int ge0_port_loaddata(char *name, void *data);
  */
 void ge0_port_noTone(void);
 
-#define MEMORY_BY_GE0
 #ifdef MEMORY_BY_GE0
 /**
  * Allocates memory by returning a pointer or 0 if no memory was allocated.

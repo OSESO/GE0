@@ -98,7 +98,7 @@ void fllTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1,
                  uint16_t x2, uint16_t y2);
 void drwCirc(int16_t x0, int16_t y0, int16_t r);
 void fllCirc(int16_t x0, int16_t y0, int16_t r);
-void printc(char c, uint8_t fc, uint8_t bc);
+void printc(char c);
 void setRedrawRect(uint8_t s, uint8_t e);
 void fontload(char *adr, char start, char end);
 void fontsize(int16_t imgwidth, int16_t imgheight, int16_t charwidth,
