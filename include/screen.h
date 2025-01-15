@@ -114,4 +114,6 @@ void setParticle(int8_t gravity, uint8_t count, uint16_t time);
 void setEmitter(uint16_t time, int16_t dir, int16_t dir1, int16_t speed);
 void setEmitterSize(uint8_t width, uint8_t height, uint8_t size);
 void drawParticle(int16_t x, int16_t y, uint8_t color);
+int16_t fixed_cos(int16_t g);
+int16_t fixed_sin(int16_t g);
 #endif

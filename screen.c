@@ -684,7 +684,7 @@ int16_t atan2_fp(int16_t y_fp, int16_t x_fp) {
     else
         return (angle);
 }
-int16_t fixed_sin(int x) {
+int16_t fixed_sin(int16_t x) {
     // Bhaskara I's sine approximation sin(x°) = 4·x·(180−x)/(40500−x·(180−x))
     char pos = 1; // positive - keeps an eye on the sign.
     if (x < 0) {

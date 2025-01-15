@@ -52,4 +52,54 @@ int ge0_port_random_max(int max);
  */
 int ge0_port_random_min_max(int min, int max);
 
+/**
+ * @brier 持久化存储一个数据
+ *
+ * @param name 数据的名称
+ * @param data 指向存储地址
+ * @param data count size of data in byte
+ * @retval the data saved. If not space is avliable, return any val smaller than
+ * count
+ */
+int ge0_port_savedata(char *name, void *data, int count);
+
+/**
+ * @brier 从持久化存储中读取数据
+ *
+ * @param name 数据的名称
+ * @param[out] data 被填充的数据地址
+ * @retval the data read.
+ */
+int ge0_port_loaddata(char *name, void *data);
+
+/**
+ * @brief Stop the generation of sound triggered by ge0_port_tone
+ */
+void ge0_port_noTone(void);
+
+#define MEMORY_BY_GE0
+#ifdef MEMORY_BY_GE0
+/**
+ * Allocates memory by returning a pointer or 0 if no memory was allocated.
+ * @param size The size of the memory to allocate.
+ * @return A pointer to the allocated memory or 0 if allocation failed.
+ */
+void *ge0_port_malloc(int size);
+
+/**
+ * Releases previously allocated memory.
+ * @param array A pointer to the memory to be freed.
+ */
+void ge0_port_free(void *array);
+
+/**
+ * Copies the contents of one array to another.
+ * @param array1 The destination array.
+ * @param array2 The source array.
+ * @param size The number of elements to copy.
+ */
+void ge0_port_memcpy(int *array1, int *array2, int size);
+
+#endif
+
 #endif // ge0_port_interface_H_

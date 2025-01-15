@@ -365,4 +365,91 @@ unsigned short gettimer(int n);
 */
 void settimer(int n, unsigned short time);
 
+// *****************************
+// Working with data storage
+// *****************************
+
+/**
+ * Saves the array in flash memory. "name" indicates the name of the storage.
+ * Count indicates the number of bytes to be saved.
+ * Returns the number of bytes saved. If the return value is shorter than count
+ * then noting is saved
+ */
+int savedata(char *name, void *data, int count);
+
+/**
+ * Uploads previously saved data under the name "name" to data array. Returns
+ * the number of bytes loaded.
+ */
+int loaddata(char *name, void *data);
+
+// *****************************
+// Working with sound and music
+// *****************************
+
+/**
+   Plays the sound at the right frequency for the right time.
+*/
+void tone(int freq, int delay);
+
+/**
+   Loads a melody in rtttl format into the player. isLoop can be 0 (play once)
+   and 1 (play in a circle).
+*/
+void loadrtttl(char *address, int isLoop);
+
+/**
+   Play the melody.
+*/
+void playrtttl();
+
+/**
+   Pause the melody.
+*/
+void pausertttl();
+
+/**
+   Stop the melody.
+*/
+void stoprtttl();
+
+// *****************************
+// Working with sound and music
+// *****************************
+
+/**
+   Returns sinus from angle (takes values in degrees from 0 to 360).
+*/
+fixed sin(short angle);
+
+/**
+   Returns cosinus from angle (takes values in degrees from 0 to 360).
+*/
+fixed cos(short angle);
+
+/**
+   Returns the distance between two points.
+*/
+short distance(short x1, short y1, short x2, short y2);
+
+// *****************************
+// Working with memory
+// *****************************
+#define MEMORY_BY_GE0
+#ifdef MEMORY_BY_GE0
+/**
+ * Allocates memory by returning a pointer or 0 if no memory was allocated.
+ */
+int *malloc(int size);
+
+/**
+ * Releases previously allocated memory. Accepts pointer.
+ */
+void free(int *array);
+
+/**
+ * Copies Array2 to Array1 with a long "size".
+ */
+void memcpy(int *array1, int *array2, int size);
+#endif // MEMORY_BY_GE0
 #endif

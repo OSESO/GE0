@@ -1,5 +1,7 @@
 #include "engine.h"
+#include "ge0_port_interface.h"
 #include "screen.h"
+#include "sound.h"
 #include "stdarg.h"
 #include <stdint.h>
 
@@ -9,7 +11,6 @@ uint8_t timeForRedraw = 48;
 extern uint8_t fixed_res_bit;
 volatile uint8_t thiskey;
 volatile uint16_t timers[8];
-
 // Not implemented
 /* #define USE_VIRTUAL_KBD */
 
@@ -307,3 +308,54 @@ int getkey(void) {
 unsigned short gettimer(int n) { return timers[n & 0x7]; }
 
 void settimer(int n, unsigned short time) { timers[n & 0x7] = time; }
+int savedata(char *name, void *data, int count) {
+    return ge0_port_savedata(name, data, count);
+}
+
+int loaddata(char *name, void *data) { return ge0_port_loaddata(name, data); }
+
+void tone(int freq, int delay) { addTone(freq, delay); }
+
+void loadrtttl(char *address, int isLoop) {
+    setRtttlAddress(address);
+    setRtttlLoop(isLoop);
+}
+
+void playrtttl() { setRtttlPlay(1); }
+
+void pausertttl() { setRtttlPlay(0); }
+
+void stoprtttl() { setRtttlPlay(2); }
+
+fixed sin(short angle) { return fixed_sin(angle); }
+
+fixed cos(short angle) { return fixed_cos(angle); }
+
+static int16_t isqrt(int16_t n) {
+    int g = 0x8000;
+    int c = 0x8000;
+    for (;;) {
+        if (g * g > n) {
+            g ^= c;
+        }
+        c >>= 1;
+        if (c == 0) {
+            return g;
+        }
+        g |= c;
+    }
+}
+
+short distance(short x1, short y1, short x2, short y2) {
+    return isqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+}
+#ifdef MEMORY_BY_GE0
+int *malloc(int size) { return ge0_port_malloc(size); }
+
+void free(int *array) { ge0_port_free(array); }
+
+void memcpy(int *array1, int *array2, int size) {
+    ge0_port_memcpy(array1, array2, size);
+}
+
+#endif // MEMORY_BY_GE0

@@ -50,3 +50,13 @@ int ge0_port_get_key(void) {
         return 0;
     return 222; // todo
 }
+
+#ifdef MEMORY_BY_GE0
+
+void *ge0_port_malloc(int size) { return malloc(size); }
+void ge0_port_free(void *array) { free(array); }
+void ge0_port_memcpy(int *array1, int *array2, int size) {
+    memcpy(array1, array2, size);
+}
+
+#endif // MEMORY_BY_GE0
