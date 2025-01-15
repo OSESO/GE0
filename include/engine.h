@@ -237,11 +237,14 @@ int putn(int number);
    prints a line with a specified formatting. Supported %d (number int) %f
    (number fixed) %s (string) %c (character).
 */
-// int printf(char *formatString, arg - list...);
+int printf(char *formatString, ...);
 
 /**
    gets a character from the keyboard. The program is interrupted and waits for
    the character to be entered.
+
+   note: You might always want to use getkey instead of this
+   and this api is not implemented in current version of GE0
 */
 int getchar();
 
@@ -266,5 +269,100 @@ void drawstring(char *text, int x, int y);
    Draws the character on the screen at coordinates x and y.
 */
 void drawchar(char character, int x, int y);
+
+// *****************************
+// Working with tile map
+// *****************************
+
+/**
+ * Loads a Tile map denoted by address, setting the required width & height,
+ * imgwidth & imgheight is the size of each tile
+ * width & height is the size of the whole tile map
+ * A tilemap is an array of pointers.
+ * 注：原版引擎是运行在16位VM上的，加上具独特的寻址方式，且隐含了sizeof(int)
+ * == sizeof(ptr)的假定，在原版引擎的示例程序中保存tilemap的数组是int类型的
+ * 为了方便寻址设置，GE0要求tilemap数组的数据类型是 u8* 。这是一个不兼容的修改。
+ * 也许会出一个port过的在线引擎来修理这件事。或者出一个转换脚本
+ */
+void loadtile(unsigned char **address, int imgwidth, int imgheight, int width,
+              int height);
+
+/**
+ * Draws a Tile at the Screen co-ordinates denoted by x & y.
+ */
+void drawtile(int x, int y);
+
+/**
+ * If it is not used, the sprites' collisions with the tiles are checked against
+ * the tiles map. Otherwise, they are checked against the collision map. The
+ * collision map must be a single bit. Its size is the same as the size of the
+ * collision map.
+ */
+void setcollisionmap(unsigned char *address);
+
+/**
+ * Gets the address of the image in a cell at x & y at the Screen co-ordinates
+ * denoted by x & y.
+ */
+unsigned char *gettileinxy(int x, int y);
+
+// *****************************
+// Working with particles
+// *****************************
+
+/**
+   Creates a Particle. The Gravity value is denoted by gravity, where a value of
+   0 denotes no Gravity and an integer value denotes the amount of Gravity
+   (Added to the speed along the y axis every frame). The number of Particles to
+   be displayed is set by count and the length of Time that the Particle should
+   run for is set by time (in milliseconds).
+*/
+void setparticle(int gravity, int count, int time);
+
+/**
+   Sets the Emitter for the Particle. The time for the Emitter to run is denoted
+   by time (in milliseconds), the x direction is denoted by dir, the y direction
+   is denoted by dir1 and the speed of the Particles is denoted by speed.
+*/
+void setemitter(int time, int dir, int dir1, unsigned char speed);
+
+/**
+   Sets the size of the emitter area (width, height) and the size of the sprite
+   (size).
+*/
+void emittersize(int width, int height, unsigned char size);
+
+/**
+   Draws the Particle at the co-ordinates denoted by x & y and in the colour
+   denoted by color.
+*/
+void drawparticle(int x, int y, int color);
+
+// *****************************
+// Working with particles
+// *****************************
+
+/**
+  returns the value of the key currently being pressed on the keyboard. The
+  value returned will be one of the following (the number in brackets is the
+  integer value representing the key): KEY_UP (1), KEY_LEFT (4), KEY_DOWN (2),
+  KEY_RIGHT (8), KEY_A (16), KEY_B (32), KEY_SELECT (64), KEY_START (128)
+*/
+int getkey(void);
+
+// *****************************
+// Working with timers
+// *****************************
+
+/**
+   returns the current value of the Timer, in milliseconds, denoted by n. Total
+   8 timers from 0 to 7.
+*/
+unsigned short gettimer(int n);
+
+/**
+   sets the Timer denoted by n to the time, in milliseconds, denoted by time.
+*/
+void settimer(int n, unsigned short time);
 
 #endif

@@ -17,7 +17,7 @@ struct sprite {
     uint16_t address;
     int16_t x;
     int16_t y;
-    int16_t previousx;
+    int16_t previousx; // Safe place -- No collision
     int16_t previousy;
     uint8_t width;
     uint8_t height;
@@ -34,17 +34,34 @@ struct sprite {
     uint16_t onexitscreen;
 };
 
-struct Tile {
-    int16_t adr;
-    uint8_t imgwidth;
-    uint8_t imgheight;
-    uint8_t width;
-    uint8_t height;
-    int16_t x;
+struct TileMap {
+    uint8_t **adr;
+    /*          tile       tiles
+     *           map        def
+     * adr ───=┌─────┐
+     *         │  0  ├───► Tile A
+     *         ├─────┤
+     *         │  1  ├─┬─► Tile B
+     *         ├─────┤ │
+     *         │  2  ├─┘
+     *         ├─────┤
+     *         │ ... │
+     *         ├─────┤
+     *         │  n  ├───► Tile C
+     *         └─────┘
+     * Adr is a pointer which points to
+     *  An array of pointers which points to
+     *    An array of u8
+     */
+    uint8_t tile_width;
+    uint8_t tile_height;
+    uint8_t map_width;
+    uint8_t map_height;
+    int16_t x; // Where the tile map is located on screen
     int16_t y;
-    uint16_t pixwidth;
-    uint16_t pixheight;
-    uint16_t collisionMap;
+    uint16_t pixwidth;     // The total width of tilemap on screen
+    uint16_t pixheight;    // The total height of tilemap on screen
+    uint8_t *collisionMap; // a bitmap
 };
 
 extern uint32_t line_is_draw[];
@@ -52,6 +69,7 @@ extern uint8_t screen[];
 extern uint8_t sprite_screen[];
 extern uint16_t palette[];
 extern uint16_t sprtpalette[];
+extern int8_t char_x, char_y;
 
 void clearScr(uint8_t p);
 void changePalette(uint8_t n, uint16_t c);
@@ -82,4 +100,19 @@ void fllTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1,
 void drwCirc(int16_t x0, int16_t y0, int16_t r);
 void fllCirc(int16_t x0, int16_t y0, int16_t r);
 void printc(char c, uint8_t fc, uint8_t bc);
+void setRedrawRect(uint8_t s, uint8_t e);
+void fontload(char *adr, char start, char end);
+void fontsize(int16_t imgwidth, int16_t imgheight, int16_t charwidth,
+              int16_t charheight);
+void drawString(char *s, uint16_t x, uint16_t y);
+void drawChar(uint8_t c, uint16_t x, uint16_t y);
+void loadTile(uint8_t **adr, uint8_t iwidth, uint8_t iheight, uint8_t width,
+              uint8_t height);
+void drawTile(int16_t x0, int16_t y0);
+void setTileCollisionMap(uint8_t *adr);
+uint8_t *getTileInXY(int16_t x, int16_t y, uint8_t *collisionMapAdr);
+void setParticle(int8_t gravity, uint8_t count, uint16_t time);
+void setEmitter(uint16_t time, int16_t dir, int16_t dir1, int16_t speed);
+void setEmitterSize(uint8_t width, uint8_t height, uint8_t size);
+void drawParticle(int16_t x, int16_t y, uint8_t color);
 #endif

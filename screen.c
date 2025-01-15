@@ -1,6 +1,7 @@
 #include "screen.h"
 #include "engine.h"
 #include "font_a.h"
+#include "ge0_port_interface.h"
 
 // This file includes functions to control the canvas in engine
 
@@ -30,17 +31,66 @@ struct sprite sprite_table[SPRITE_COUNT];
 // This engine uses rgb565 format palette
 uint16_t palette[16];
 uint16_t sprtpalette[16];
-struct Tile tile;
+struct TileMap tileMap;
 
+struct Emitter {
+    uint8_t count;
+    int8_t gravity;
+    int8_t color;
+    uint8_t size;
+    int8_t speedx;
+    int8_t speedy;
+    int8_t speedx1;
+    int8_t speedy1;
+    int16_t time;
+    int16_t timer;
+    int16_t timeparticle;
+    int16_t x;
+    int16_t y;
+    int16_t width;
+    int16_t height;
+};
+struct Emitter emitter;
+
+struct Particle {
+    int8_t gravity;
+    int8_t speedx;
+    int8_t speedy;
+    int8_t color;
+    int16_t time;
+    int16_t x;
+    int16_t y;
+    int8_t size;
+};
+struct Particle particles[PARTICLE_COUNT];
 int16_t imageSize = 1;
 uint8_t clipx0 = 0;
 uint8_t clipx1 = 128;
 uint8_t clipy0 = 0;
 uint8_t clipy1 = 128;
 uint8_t isClip = 0;
-int8_t regx = 0;
-int8_t regy = 0;
-char charArray[340];
+
+struct CustomFont {
+    char *adress;
+    int8_t start;
+    int8_t end;
+    int8_t charwidth;
+    int8_t charheight;
+    int16_t imgwidth;
+    int16_t imgheight;
+    int8_t columns;
+};
+struct CustomFont customfont;
+// Each character occupies a 6x8 pixel area. Characters can only be displayed at
+// fixed positions on the screen.
+// charArray stores all the characters currently displayed on the screen.
+// The variables `char_x` and `char_y` track the current cursor position in
+// character-based coordinates.
+char charArray[340]; // TODO: this might not be 340 on screen with different
+                     // size
+int8_t char_x = 0;
+int8_t char_y = 0;
+
 extern int8_t bgcolor;
 extern int8_t color;
 
@@ -108,11 +158,12 @@ void setClip(int16_t x0, int16_t y0, int16_t width, int16_t height) {
     else
         isClip = 1;
 }
-void setCharX(int8_t x) { regx = x; }
+void setCharX(int8_t x) { char_x = x; }
 
-void setCharY(int8_t y) { regy = y; }
+void setCharY(int8_t y) { char_y = y; }
 
-static void drawImgS(uint8_t *image, int16_t x, int16_t y, int32_t w, int32_t h) {
+static void drawImgS(uint8_t *image, int16_t x, int16_t y, int32_t w,
+                     int32_t h) {
     uint32_t p, x2, y2, color, s, endx;
     s = imageSize;
     endx = ((w * s) >> fixed_res_bit);
@@ -165,99 +216,99 @@ void drawImg(uint8_t *image, int16_t x, int16_t y, int16_t w, int16_t h) {
 
 void tileDrawLine(uint8_t step, uint8_t direction) {
     int16_t x, y, x0, y0, y1, nx, ny;
-    uint16_t imgadr;
+    uint8_t *tile_adr;
     if (direction == 2) {
-        tile.x -= step * 2;
-        x0 = tile.x;
-        y0 = tile.y;
-        x = (127 - x0) / tile.imgwidth;
-        nx = x0 + x * tile.imgwidth;
-        if (x < tile.width && x >= -tile.width) {
-            for (y = 0; y < tile.height; y++) {
-                ny = y0 + y * tile.imgheight;
-                if (ny > -tile.height && ny < 128) {
+        tileMap.x -= step * 2;
+        x0 = tileMap.x;
+        y0 = tileMap.y;
+        x = (127 - x0) / tileMap.tile_width;
+        nx = x0 + x * tileMap.tile_width;
+        if (x < tileMap.map_width && x >= -tileMap.map_width) {
+            for (y = 0; y < tileMap.map_height; y++) {
+                ny = y0 + y * tileMap.tile_height;
+                if (ny > -tileMap.map_height && ny < 128) {
                     // todo: 这里要修改tile.adr的存储方式
                     // 才能比较好地去除readInt
-                    imgadr = readInt(tile.adr + (x + y * tile.width) * 2);
-                    if (imgadr > 0)
-                        drawImg(0 /*imgadr*/, nx, ny, tile.imgwidth,
-                                tile.imgheight);
+                    tile_adr = tileMap.adr[x + y * tileMap.map_width];
+                    if (tile_adr > 0)
+                        drawImg(tile_adr, nx, ny, tileMap.tile_width,
+                                tileMap.tile_height);
                     else
-                        fillRect(nx, ny, tile.imgwidth, tile.imgheight,
-                                 bgcolor);
+                        fillRect(nx, ny, tileMap.tile_width,
+                                 tileMap.tile_height, bgcolor);
                 }
             }
-        } else if (tile.width * tile.imgwidth + x0 >= 0) {
+        } else if (tileMap.map_width * tileMap.tile_width + x0 >= 0) {
             y0 = (y0 > 0) ? y0 : 0;
-            y1 = (tile.y + tile.height * tile.imgheight < 128)
-                     ? tile.y + tile.height * tile.imgheight - y0
+            y1 = (tileMap.y + tileMap.map_height * tileMap.tile_height < 128)
+                     ? tileMap.y + tileMap.map_height * tileMap.tile_height - y0
                      : 127 - y0;
             if (y0 < 127 && y1 > 0)
                 fillRect(127 - step * 2, y0, step * 2, y1, bgcolor);
         }
     } else if (direction == 1) {
-        tile.y -= step;
-        x0 = tile.x;
-        y0 = tile.y;
-        y = (127 - y0) / tile.imgheight;
-        ny = y0 + y * tile.imgheight;
-        if (y < tile.height && y >= -tile.height)
-            for (x = 0; x < tile.width; x++) {
-                nx = x0 + x * tile.imgwidth;
-                if (nx > -tile.width && nx < 128) {
-                    imgadr = readInt(tile.adr + (x + y * tile.width) * 2);
-                    if (imgadr > 0)
-                        drawImg(0 /*imgadr*/, nx, ny, tile.imgwidth,
-                                tile.imgheight);
+        tileMap.y -= step;
+        x0 = tileMap.x;
+        y0 = tileMap.y;
+        y = (127 - y0) / tileMap.tile_height;
+        ny = y0 + y * tileMap.tile_height;
+        if (y < tileMap.map_height && y >= -tileMap.map_height)
+            for (x = 0; x < tileMap.map_width; x++) {
+                nx = x0 + x * tileMap.tile_width;
+                if (nx > -tileMap.map_width && nx < 128) {
+                    tile_adr = tileMap.adr[x + y * tileMap.map_width];
+                    if (tile_adr > 0)
+                        drawImg(tile_adr, nx, ny, tileMap.tile_width,
+                                tileMap.tile_height);
                     else
-                        fillRect(nx, ny, tile.imgwidth, tile.imgheight,
-                                 bgcolor);
+                        fillRect(nx, ny, tileMap.tile_width,
+                                 tileMap.tile_height, bgcolor);
                 }
             }
     } else if (direction == 0) {
-        tile.x += step * 2;
-        x0 = tile.x;
-        y0 = tile.y;
-        x = (0 - x0) / tile.imgwidth;
-        nx = x0 + x * tile.imgwidth;
-        if (x0 < 0 && x >= -tile.width) {
-            for (y = 0; y < tile.height; y++) {
-                ny = y0 + y * tile.imgheight;
-                if (ny > -tile.height && ny < 128) {
-                    imgadr = readInt(tile.adr + (x + y * tile.width) * 2);
-                    if (imgadr > 0)
-                        drawImg(0 /*imgadr*/, nx, ny, tile.imgwidth,
-                                tile.imgheight);
+        tileMap.x += step * 2;
+        x0 = tileMap.x;
+        y0 = tileMap.y;
+        x = (0 - x0) / tileMap.tile_width;
+        nx = x0 + x * tileMap.tile_width;
+        if (x0 < 0 && x >= -tileMap.map_width) {
+            for (y = 0; y < tileMap.map_height; y++) {
+                ny = y0 + y * tileMap.tile_height;
+                if (ny > -tileMap.map_height && ny < 128) {
+                    tile_adr = tileMap.adr[x + y * tileMap.map_width];
+                    if (tile_adr > 0)
+                        drawImg(tile_adr, nx, ny, tileMap.tile_width,
+                                tileMap.tile_height);
                     else
-                        fillRect(nx, ny, tile.imgwidth, tile.imgheight,
-                                 bgcolor);
+                        fillRect(nx, ny, tileMap.tile_width,
+                                 tileMap.tile_height, bgcolor);
                 }
             }
         } else if (x0 < 128) {
             y0 = (y0 > 0) ? y0 : 0;
-            y1 = (tile.y + tile.height * tile.imgheight < 128)
-                     ? tile.y + tile.height * tile.imgheight - y0
+            y1 = (tileMap.y + tileMap.map_height * tileMap.tile_height < 128)
+                     ? tileMap.y + tileMap.map_height * tileMap.tile_height - y0
                      : 127 - y0;
             if (y0 < 127 && y1 > 0)
                 fillRect(0, y0, step * 2, y1, bgcolor);
         }
     } else if (direction == 3) {
-        tile.y += step;
-        x0 = tile.x;
-        y0 = tile.y;
-        y = (0 - y0) / tile.imgheight;
-        ny = y0 + y * tile.imgheight;
-        if (y0 < 0 && y >= -tile.height)
-            for (x = 0; x < tile.width; x++) {
-                nx = x0 + x * tile.imgwidth;
-                if (nx > -tile.width && nx < 128) {
-                    imgadr = readInt(tile.adr + (x + y * tile.width) * 2);
-                    if (imgadr > 0)
-                        drawImg(0 /*imgadr*/, nx, ny, tile.imgwidth,
-                                tile.imgheight);
+        tileMap.y += step;
+        x0 = tileMap.x;
+        y0 = tileMap.y;
+        y = (0 - y0) / tileMap.tile_height;
+        ny = y0 + y * tileMap.tile_height;
+        if (y0 < 0 && y >= -tileMap.map_height)
+            for (x = 0; x < tileMap.map_width; x++) {
+                nx = x0 + x * tileMap.tile_width;
+                if (nx > -tileMap.map_width && nx < 128) {
+                    tile_adr = tileMap.adr[x + y * tileMap.map_width];
+                    if (tile_adr > 0)
+                        drawImg(tile_adr, nx, ny, tileMap.tile_width,
+                                tileMap.tile_height);
                     else
-                        fillRect(nx, ny, tile.imgwidth, tile.imgheight,
-                                 bgcolor);
+                        fillRect(nx, ny, tileMap.tile_width,
+                                 tileMap.tile_height, bgcolor);
                 }
             }
     }
@@ -334,10 +385,11 @@ void scrollScreen(uint8_t step, uint8_t direction) {
                 sprite_table[n].previousy += 4;
             }
     }
-    if (tile.adr > 0 && !isClip)
+    if (tileMap.adr > 0 && !isClip)
         tileDrawLine(step, direction);
 }
-static void drawImageBitS(uint8_t *img, int16_t x, int16_t y, int16_t w, int16_t h) {
+static void drawImageBitS(uint8_t *img, int16_t x, int16_t y, int16_t w,
+                          int16_t h) {
     uint32_t p, x2, y2, s;
     s = imageSize;
     for (int32_t yi = 0; yi < ((h * s) >> fixed_res_bit); yi++) {
@@ -378,7 +430,8 @@ void drawImageBit(uint8_t *image, int16_t x1, int16_t y1, int16_t w,
         }
 }
 
-static void drawImgRLES(uint8_t *image, int16_t x1, int16_t y1, int16_t w, int16_t h) {
+static void drawImgRLES(uint8_t *image, int16_t x1, int16_t y1, int16_t w,
+                        int16_t h) {
     int16_t i = 0;
     uint8_t jx, jy;
     uint8_t repeat = *(image);
@@ -952,15 +1005,33 @@ void fllCirc(int16_t x0, int16_t y0, int16_t r) {
     }
 }
 
-void drawChar(char c, uint8_t x, uint8_t y) {
-    for (int8_t i = 0; i < 5; i++) { // Char bitmap = 5 columns
-        uint8_t line = (font_a[c * 5 + i]);
-        for (int8_t j = 0; j < 8; j++, line >>= 1) {
-            if (line & 1)
-                setPix(x + i, y + j, color);
+void drawChar(uint8_t c, uint16_t x, uint16_t y) {
+    if (customfont.adress == 0) {
+        for (int8_t i = 0; i < 5; i++) { // Char bitmap = 5 columns
+            int16_t line = font_a[c * 5 + i];
+            for (int8_t j = 0; j < 8; j++, line >>= 1) {
+                if (line & 1)
+                    setPix(x + i, y + j, color);
+            }
+        }
+    } else if (c <= customfont.end) {
+        if (c < customfont.start)
+            return;
+        c -= customfont.start;
+        int16_t pos = (c % customfont.columns) * customfont.charwidth +
+                      (c / customfont.columns) *
+                          (customfont.charheight * customfont.imgwidth);
+        for (int8_t j = 0; j < customfont.charheight; j++) {
+            for (int8_t i = 0; i < customfont.charwidth; i++) {
+                uint8_t line = *(customfont.adress + (pos + i) / 8);
+                if (line & (1 << (7 - ((pos + i) & 7))))
+                    setPix(x + i, y + j, color);
+            }
+            pos += customfont.imgwidth;
         }
     }
 }
+
 void charLineUp(uint8_t n) {
     clearScr(bgcolor);
     for (uint16_t i = 0; i < 336 - n * 21; i++) {
@@ -969,38 +1040,178 @@ void charLineUp(uint8_t n) {
     }
 }
 
-inline int8_t getCharY() { return regy; }
+inline int8_t getCharY() { return char_y; }
 
 void printc(char c, uint8_t fc, uint8_t bc) {
-    if (regy > 15) {
-        regy = 15;
+    if (char_y > 15) {
+        char_y = 15;
         charLineUp(1);
     }
     if (c == '\n') {
-        fillRect(regx * 6, regy * 8, 127 - regx * 6, 8, bgcolor);
-        for (uint8_t i = regx; i <= 21; i++) {
-            charArray[regx + regy * 21] = ' ';
+        fillRect(char_x * 6, char_y * 8, 127 - char_x * 6, 8, bgcolor);
+        for (uint8_t i = char_x; i <= 21; i++) {
+            charArray[char_x + char_y * 21] = ' ';
         }
-        regy++;
-        regx = 0;
+        char_y++;
+        char_x = 0;
     } else if (c == '\t') {
-        for (uint8_t i = 0; i <= regx % 5; i++) {
-            fillRect(regx * 6, regy * 8, 6, 8, bgcolor);
-            charArray[regx + regy * 21] = ' ';
-            regx++;
-            if (regx > 20) {
-                regy++;
-                regx = 0;
+        for (uint8_t i = 0; i <= char_x % 5; i++) {
+            fillRect(char_x * 6, char_y * 8, 6, 8, bgcolor);
+            charArray[char_x + char_y * 21] = ' ';
+            char_x++;
+            if (char_x > 20) {
+                char_y++;
+                char_x = 0;
             }
         }
     } else {
-        fillRect(regx * 6, regy * 8, 6, 8, bgcolor);
-        drawChar(c, regx * 6, regy * 8);
-        charArray[regx + regy * 21] = c;
-        regx++;
-        if (regx > 20) {
-            regy++;
-            regx = 0;
+        fillRect(char_x * 6, char_y * 8, 6, 8, bgcolor);
+        drawChar(c, char_x * 6, char_y * 8);
+        charArray[char_x + char_y * 21] = c;
+        char_x++;
+        if (char_x > 20) {
+            char_y++;
+            char_x = 0;
         }
     }
+}
+void setRedrawRect(uint8_t s, uint8_t e) {
+    for (int i = s; i < e; i++)
+        SET_LINE_IS_DRAW(i);
+}
+
+void fontload(char *adr, char start, char end) {
+    customfont.adress = adr;
+    customfont.start = start & 0xff;
+    customfont.end = end & 0xff;
+}
+void fontsize(int16_t imgwidth, int16_t imgheight, int16_t charwidth,
+              int16_t charheight) {
+    customfont.imgwidth = imgwidth;
+    customfont.imgheight = imgheight;
+    customfont.charwidth = charwidth & 0xff;
+    customfont.charheight = charheight & 0xff;
+    customfont.columns = customfont.imgwidth / customfont.charwidth;
+}
+
+void drawString(char *s, uint16_t x, uint16_t y) {
+    int16_t i = 0, nx = x;
+    uint8_t c;
+    c = *(s + i);
+    while (c) {
+        if (c == 10) {
+            nx = x - customfont.charwidth;
+            ;
+            y += customfont.charheight;
+        } else if (nx > -customfont.charwidth && nx < 128)
+            drawChar(*(s + i), nx, y);
+        i++;
+        c = *(s + i);
+        nx += customfont.charwidth;
+    }
+}
+
+void loadTile(uint8_t **adr, uint8_t iwidth, uint8_t iheight, uint8_t width,
+              uint8_t height) {
+    tileMap.adr = adr;
+    tileMap.tile_width = iwidth;
+    tileMap.tile_height = iheight;
+    tileMap.map_width = width;
+    tileMap.map_height = height;
+    tileMap.pixwidth = width * iwidth;
+    tileMap.pixheight = height * iheight;
+}
+void drawTile(int16_t x0, int16_t y0) {
+    int x, y, nx, ny;
+    uint8_t *tile_adr;
+    tileMap.x = x0;
+    tileMap.y = y0;
+    for (x = 0; x < tileMap.map_width; x++) {
+        nx = x0 + x * tileMap.tile_width;
+        for (y = 0; y < tileMap.map_height; y++) {
+            ny = y0 + y * tileMap.tile_height;
+            if (nx >= -tileMap.map_width && nx < 128 &&
+                ny >= -tileMap.map_height && ny < 128) {
+                tile_adr = tileMap.adr[x + y * tileMap.map_width];
+                if (tile_adr > 0)
+                    drawImg(tile_adr, nx, ny, tileMap.tile_width,
+                            tileMap.tile_height);
+            }
+        }
+    }
+}
+void setTileCollisionMap(uint8_t *adr) { tileMap.collisionMap = adr; }
+
+uint8_t *getTileInXY(int16_t x, int16_t y, uint8_t *collisionMapAdr) {
+    uint32_t p;
+    if (x < tileMap.x || y < tileMap.y || x > tileMap.x + tileMap.pixwidth ||
+        y > tileMap.y + tileMap.pixheight)
+        return 0;
+    p = ((x - tileMap.x) / (int16_t)tileMap.tile_width) +
+        ((y - tileMap.y) / (int16_t)tileMap.tile_height *
+         (int16_t)tileMap.map_width);
+    if (collisionMapAdr > 0) // This path is only used inside screen.c and the
+                             // return of this path should never be dereferenced
+        if (collisionMapAdr[p / 8] & (1 << (7 - (p & 7)))) {
+            return (uint8_t *)1;
+        } else {
+            return 0;
+        }
+    else
+        return tileMap.adr[p];
+}
+
+void setParticle(int8_t gravity, uint8_t count, uint16_t time) {
+    emitter.gravity = gravity;
+    emitter.count = count;
+    emitter.timeparticle = time;
+}
+
+void setEmitter(uint16_t time, int16_t dir, int16_t dir1, int16_t speed) {
+    dir = dir % 360;
+    if (dir < 0)
+        dir += 360;
+    emitter.time = time;
+    emitter.speedx = (int8_t)((speed * fixed_cos(dir)) >> fixed_res_bit);
+    emitter.speedy = (int8_t)((speed * fixed_sin(dir)) >> fixed_res_bit);
+    emitter.speedx1 = (int8_t)((speed * fixed_cos(dir1)) >> fixed_res_bit);
+    emitter.speedy1 = (int8_t)((speed * fixed_sin(dir1)) >> fixed_res_bit);
+}
+
+void setEmitterSize(uint8_t width, uint8_t height, uint8_t size) {
+    emitter.width = width << 1;
+    emitter.height = height << 1;
+    emitter.size = size;
+}
+static int randomD(int a, int b) {
+    int minv = a < b ? a : b;
+    int maxv = a > b ? a : b;
+    return ge0_port_random_min_max(minv, maxv + 1);
+}
+
+static void updateEmitter(void) {
+    int i, n;
+    i = emitter.count;
+    for (n = 0; n < PARTICLE_COUNT; n++) {
+        if (i == 0)
+            break;
+        if (particles[n].time <= 0) {
+            i--;
+            particles[n].time = emitter.timeparticle;
+            particles[n].x = emitter.x + ge0_port_random_max(emitter.width);
+            particles[n].y = emitter.y + ge0_port_random_max(emitter.height);
+            particles[n].color = emitter.color;
+            particles[n].size = emitter.size;
+            particles[n].speedx = randomD(emitter.speedx, emitter.speedx1);
+            particles[n].speedy = randomD(emitter.speedy, emitter.speedy1);
+            particles[n].gravity = emitter.gravity;
+        }
+    }
+}
+void drawParticle(int16_t x, int16_t y, uint8_t color) {
+    emitter.x = x << 1;
+    emitter.y = y << 1;
+    emitter.color = color;
+    emitter.timer = emitter.time;
+    updateEmitter();
 }
