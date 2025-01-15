@@ -49,8 +49,7 @@ struct TileMap {
      *         ├─────┤
      *         │  n  ├───► Tile C
      *         └─────┘
-     * Adr is a pointer which points to
-     *  An array of pointers which points to
+     * Adr is an array of pointers which points to
      *    An array of u8
      */
     uint8_t tile_width;

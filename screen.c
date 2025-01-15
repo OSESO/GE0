@@ -227,8 +227,6 @@ void tileDrawLine(uint8_t step, uint8_t direction) {
             for (y = 0; y < tileMap.map_height; y++) {
                 ny = y0 + y * tileMap.tile_height;
                 if (ny > -tileMap.map_height && ny < 128) {
-                    // todo: 这里要修改tile.adr的存储方式
-                    // 才能比较好地去除readInt
                     tile_adr = tileMap.adr[x + y * tileMap.map_width];
                     if (tile_adr > 0)
                         drawImg(tile_adr, nx, ny, tileMap.tile_width,
