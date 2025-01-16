@@ -10,6 +10,9 @@ uint32_t timeF, timeR, timeSpr, timeGpu;
 uint32_t cadr_count;
 uint32_t redraw;
 uint8_t fps;
+
+extern volatile uint8_t thiskey;
+
 void screen_worker(void) {
     while (1) {
         DELAY(timeForRedraw);
@@ -30,5 +33,19 @@ void screen_worker(void) {
             fps = cadr_count;
             cadr_count = cadr_count % 2;
         }
+    }
+}
+
+void key_worker(void) {
+    while (1) {
+        DELAY(100);
+        thiskey = ge0_port_get_key(); // 这是否会影响组合键？
+    }
+}
+
+void game_logic_worker() {
+    user_main();
+    while (1) {
+        DELAY(1000);
     }
 }

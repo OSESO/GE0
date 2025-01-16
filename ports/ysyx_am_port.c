@@ -48,7 +48,34 @@ int ge0_port_get_key(void) {
     AM_INPUT_KEYBRD_T ev = io_read(AM_INPUT_KEYBRD);
     if (ev.keycode == AM_KEY_NONE || ev.keydown == false)
         return 0;
-    return 222; // todo
+    int ret = 0;
+    switch (ev.keycode) {
+    case AM_KEY_UP:
+        ret = 1;
+        break;
+    case AM_KEY_LEFT:
+        ret = 4;
+        break;
+    case AM_KEY_DOWN:
+        ret = 2;
+        break;
+    case AM_KEY_RIGHT:
+        ret = 8;
+        break;
+    case AM_KEY_Z: // key_a
+        ret = 16;
+        break;
+    case AM_KEY_X: // key_b
+        ret = 32;
+        break;
+    case AM_KEY_C: // key_select
+        ret = 64;
+        break;
+    case AM_KEY_V: // key_start
+        ret = 128;
+        break;
+    }
+    return ret;
 }
 
 #ifdef MEMORY_BY_GE0

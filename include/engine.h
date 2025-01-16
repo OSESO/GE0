@@ -153,7 +153,7 @@ int angbetweenspr(int n1, int n2);
    definition) and assigns it to the Sprite denoted by n.
    Maybe this should called setsprite instead
 */
-void getsprite(int n, char* address);
+void getsprite(int n, char *address);
 
 /**
    puts the Sprite n at the co-ordinates on the Screen denoted by x & y.
@@ -458,4 +458,6 @@ void free(int *array);
  */
 void memcpy(int *array1, int *array2, int size);
 #endif // MEMORY_BY_GE0
+
+void user_main(void);
 #endif
