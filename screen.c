@@ -2,16 +2,10 @@
 #include "engine.h"
 #include "font_a.h"
 #include "ge0_port_interface.h"
+#include <stdint.h>
 
 // This file includes functions to control the canvas in engine
 
-#define SPRITE_IS_SOLID(a) (sprite_table[a].flags & 1)
-#define SPRITE_IS_SCROLLED(a) (sprite_table[a].flags & 2)
-#define SPRITE_IS_ONEBIT(a) (sprite_table[a].flags & 4)
-#define SPRITE_IS_FLIP_HORIZONTAL(a) (sprite_table[a].flags & 8)
-#define SET_LINE_IS_DRAW(a) line_is_draw[(a) >> 5] |= (1 << ((a) & 31))
-#define PARTICLE_COUNT 32
-#define SPRITE_COUNT 32
 #define MULTIPLY_FP_RESOLUTION_BITS 8
 #define abs(x) ((x) > 0 ? (x) : -(x))
 /* screen and sprite_screen
@@ -26,42 +20,13 @@ uint8_t
 uint8_t sprite_screen[SCREEN_ARRAY_DEF * sizeof(uint8_t)];
 uint32_t line_is_draw[4]; // Keep whether the line is changed since the last
                           // redraw Each bit represents one line
-struct sprite sprite_table[SPRITE_COUNT];
 // todo: change 'draw' to 'drawn'
 // This engine uses rgb565 format palette
 uint16_t palette[16];
 uint16_t sprtpalette[16];
+struct sprite sprite_table[SPRITE_COUNT];
 struct TileMap tileMap;
-
-struct Emitter {
-    uint8_t count;
-    int8_t gravity;
-    int8_t color;
-    uint8_t size;
-    int8_t speedx;
-    int8_t speedy;
-    int8_t speedx1;
-    int8_t speedy1;
-    int16_t time;
-    int16_t timer;
-    int16_t timeparticle;
-    int16_t x;
-    int16_t y;
-    int16_t width;
-    int16_t height;
-};
 struct Emitter emitter;
-
-struct Particle {
-    int8_t gravity;
-    int8_t speedx;
-    int8_t speedy;
-    int8_t color;
-    int16_t time;
-    int16_t x;
-    int16_t y;
-    int8_t size;
-};
 struct Particle particles[PARTICLE_COUNT];
 int16_t imageSize = 1;
 uint8_t clipx0 = 0;
@@ -72,8 +37,8 @@ uint8_t isClip = 0;
 
 struct CustomFont {
     char *adress;
-    int8_t start;
-    int8_t end;
+    uint8_t start;
+    uint8_t end;
     int8_t charwidth;
     int8_t charheight;
     int16_t imgwidth;
@@ -91,6 +56,10 @@ char charArray[340]; // TODO: this might not be 340 on screen with different
 int8_t char_x = 0;
 int8_t char_y = 0;
 
+static const uint16_t bpalette[] = {
+    0x0020, 0xE718, 0xB9A8, 0x7DB6, 0x61EB, 0x6D2D, 0x21EC, 0xD5CA,
+    0xAC4D, 0x42CB, 0xBB09, 0x3186, 0x73AE, 0x8D4B, 0x3DF9, 0xBDD7};
+
 extern int8_t bgcolor;
 extern int8_t color;
 
@@ -98,6 +67,220 @@ const uint8_t fixed_res_bit = 8;
 
 int16_t readInt(uint16_t adr);
 uint8_t readMem(uint16_t adr);
+
+void display_init() {
+    for (int i = 0; i < SPRITE_COUNT; i++) {
+        sprite_table[i].address = 0;
+        sprite_table[i].x = -255;
+        sprite_table[i].y = -255;
+        sprite_table[i].previousx = -255;
+        sprite_table[i].previousy = -255;
+        sprite_table[i].width = 8;
+        sprite_table[i].height = 8;
+        sprite_table[i].size = 1 << fixed_res_bit;
+        sprite_table[i].speedx = 0;
+        sprite_table[i].speedy = 0;
+        sprite_table[i].angle = 0;
+        sprite_table[i].lives = 0;
+        sprite_table[i].collision = -1;
+        sprite_table[i].flags =
+            18; // color = 1 isonebit = 0 scrolled = 1 solid = 0
+        sprite_table[i].gravity = 0;
+        sprite_table[i].oncollision = 0;
+        sprite_table[i].onexitscreen = 0;
+    }
+    for (int i = 0; i < 16; i++) {
+        palette[i] = bpalette[i];
+        sprtpalette[i] = bpalette[i];
+    }
+    emitter.time = 0;
+    emitter.timer = 0;
+    emitter.size = 0;
+    emitter.width = 0;
+    emitter.height = 0;
+    clipx0 = 0;
+    clipx1 = 128;
+    clipy0 = 0;
+    clipy1 = 128;
+    tileMap.adr = 0;
+    tileMap.collisionMap = 0;
+    for (int8_t i = 0; i < PARTICLE_COUNT; i++)
+        particles[i].time = 0;
+    for (uint16_t i = 0; i < 340; i++)
+        charArray[i] = 0;
+    imageSize = 1;
+    char_x = 0;
+    char_y = 0;
+    customfont.adress = 0;
+    customfont.start = 0;
+    customfont.end = 255;
+    customfont.imgwidth = 0;
+    customfont.imgheight = 0;
+    customfont.charwidth = 6;
+    customfont.charheight = 8;
+    customfont.columns = 0;
+    timeForRedraw = 48;
+}
+void clearSpriteScr() {
+    for (int y = 0; y < 128; y++)
+        for (int x = 0; x < 64; x += 4) {
+            if (*((uint32_t *)&sprite_screen[SCREEN_ADDR(x, y)]) > 0)
+                SET_LINE_IS_DRAW(y);
+        }
+    // FIXME: sprite_screen到底是多大？
+    ge0_port_memset(sprite_screen, 0, SCREEN_SIZE);
+}
+
+void resolveCollision(uint8_t n, uint8_t i) {
+    int startx, starty, startix, startiy;
+    startx = sprite_table[n].x;
+    starty = sprite_table[n].y;
+    startix = sprite_table[i].x;
+    startiy = sprite_table[i].y;
+    sprite_table[n].x = sprite_table[n].x - sprite_table[n].speedx;
+    sprite_table[n].y = sprite_table[n].y - sprite_table[n].speedy;
+    sprite_table[i].x = sprite_table[i].x - sprite_table[i].speedx;
+    sprite_table[i].y = sprite_table[i].y - sprite_table[i].speedy;
+    if ((sprite_table[n].speedy >= 0 && sprite_table[i].speedy <= 0) ||
+        (sprite_table[n].speedy <= 0 && sprite_table[i].speedy >= 0)) {
+        if (sprite_table[n].y > sprite_table[i].y) {
+            if (sprite_table[i].gravity) {
+                sprite_table[i].y =
+                    sprite_table[n].y - (sprite_table[i].height << 2);
+            }
+        } else {
+            if (sprite_table[n].gravity) {
+                sprite_table[n].y =
+                    sprite_table[i].y - (sprite_table[n].height << 2);
+            }
+        }
+    }
+    if (sprite_table[n].x < sprite_table[i].x + (sprite_table[i].width << 2) &&
+        sprite_table[n].x + (sprite_table[n].width << 2) > sprite_table[i].x &&
+        sprite_table[n].y < sprite_table[i].y + (sprite_table[i].height << 2) &&
+        sprite_table[n].y + (sprite_table[n].height << 2) > sprite_table[i].y) {
+        if (sprite_table[n].x > sprite_table[i].x) {
+            sprite_table[n].x++;
+            sprite_table[i].x--;
+        } else {
+            sprite_table[n].x--;
+            sprite_table[i].x++;
+        }
+        if (sprite_table[n].y > sprite_table[i].y) {
+            sprite_table[n].y++;
+            sprite_table[i].y--;
+        } else {
+            sprite_table[n].y--;
+            sprite_table[i].y++;
+        }
+    }
+    if (sprite_table[n].gravity) {
+        sprite_table[n].speedx = (sprite_table[n].x - startx) / 4;
+        sprite_table[n].speedy = (sprite_table[n].y - starty) / 4;
+    } else {
+        sprite_table[n].speedx = sprite_table[n].x - startx;
+        sprite_table[n].speedy = sprite_table[n].y - starty;
+    }
+    if (sprite_table[i].gravity) {
+        sprite_table[i].speedx = (sprite_table[i].x - startix) / 4;
+        sprite_table[i].speedy = (sprite_table[i].y - startiy) / 4;
+    } else {
+        sprite_table[i].speedx = sprite_table[i].x - startix;
+        sprite_table[i].speedy = sprite_table[i].y - startiy;
+    }
+}
+
+void testSpriteCollision() {
+    int n, i;
+    int16_t x0, y0, x1, y1;
+    int32_t iwidth, iheight, nwidth, nheight;
+    for (n = 0; n < SPRITE_COUNT; n++)
+        sprite_table[n].collision = -1;
+    for (n = 0; n < SPRITE_COUNT; n++) {
+        if (sprite_table[n].lives > 0) {
+            x0 = sprite_table[n].x >> 2;
+            y0 = sprite_table[n].y >> 2;
+            nwidth =
+                (sprite_table[n].width * sprite_table[n].size) >> fixed_res_bit;
+            nheight = (sprite_table[n].height * sprite_table[n].size) >>
+                      fixed_res_bit;
+            for (i = 0; i < n; i++) {
+                if (sprite_table[i].lives > 0) {
+                    x1 = sprite_table[i].x >> 2;
+                    y1 = sprite_table[i].y >> 2;
+                    iwidth = (sprite_table[i].width * sprite_table[i].size) >>
+                             fixed_res_bit;
+                    iheight = (sprite_table[i].height * sprite_table[i].size) >>
+                              fixed_res_bit;
+                    if (x0 < x1 + iwidth && x0 + nwidth > x1 &&
+                        y0 < y1 + iheight && y0 + nheight > y1) {
+                        sprite_table[n].collision = i;
+                        sprite_table[i].collision = n;
+                        if (sprite_table[n].oncollision != 0)
+                            sprite_table[n].oncollision(n);
+                        if (sprite_table[i].oncollision != 0)
+                            sprite_table[i].oncollision(i);
+                        if (SPRITE_IS_SOLID(n) && SPRITE_IS_SOLID(i)) {
+                            resolveCollision(n, i);
+                        }
+                    }
+                }
+            }
+            if ((SPRITE_IS_SOLID(n)) && tileMap.adr != 0) {
+                x0 = sprite_table[n].x >> 2;
+                y0 = sprite_table[n].y >> 2;
+                if (getTileInXY(x0, y0, tileMap.collisionMap) ||
+                    getTileInXY(x0 + nwidth, y0, tileMap.collisionMap) ||
+                    getTileInXY(x0, y0 + nheight, tileMap.collisionMap) ||
+                    getTileInXY(x0 + nwidth, y0 + nheight,
+                                tileMap.collisionMap)) {
+                    sprite_table[n].y =
+                        sprite_table[n].y - sprite_table[n].speedy;
+                    sprite_table[n].speedy =
+                        sprite_table[n].speedy / 2 - sprite_table[n].gravity;
+                    y0 = sprite_table[n].y >> 2;
+                    if (getTileInXY(x0, y0, tileMap.collisionMap) ||
+                        getTileInXY(x0 + nwidth, y0, tileMap.collisionMap) ||
+                        getTileInXY(x0, y0 + nheight, tileMap.collisionMap) ||
+                        getTileInXY(x0 + nwidth, y0 + nheight,
+                                    tileMap.collisionMap)) {
+                        sprite_table[n].x =
+                            sprite_table[n].x - sprite_table[n].speedx;
+                        sprite_table[n].speedx =
+                            (sprite_table[n].x -
+                             (sprite_table[n].x - sprite_table[n].speedx)) /
+                            2;
+                    }
+                    x0 = sprite_table[n].x >> 2;
+                    y0 = sprite_table[n].y >> 2;
+                    if (getTileInXY(x0, y0, tileMap.collisionMap) ||
+                        getTileInXY(x0 + nwidth, y0, tileMap.collisionMap) ||
+                        getTileInXY(x0, y0 + nheight, tileMap.collisionMap) ||
+                        getTileInXY(x0 + nwidth, y0 + nheight,
+                                    tileMap.collisionMap)) {
+                        sprite_table[n].x = sprite_table[n].previousx;
+                        sprite_table[n].y = sprite_table[n].previousy;
+                    } else {
+                        sprite_table[n].previousx = sprite_table[n].x;
+                        sprite_table[n].previousy = sprite_table[n].y;
+                    }
+                } else {
+                    sprite_table[n].previousx = sprite_table[n].x;
+                    sprite_table[n].previousy = sprite_table[n].y;
+                }
+            }
+        }
+    }
+}
+void moveSprites() {
+    for (int i = 0; i < SPRITE_COUNT; i++) {
+        if (sprite_table[i].lives > 0) {
+            sprite_table[i].speedy += sprite_table[i].gravity;
+            sprite_table[i].x += sprite_table[i].speedx;
+            sprite_table[i].y += sprite_table[i].speedy;
+        }
+    }
+}
 
 // Changes palette of the pixel
 void setPix(uint16_t x, uint16_t y, uint8_t p) {
@@ -565,6 +748,21 @@ int16_t getSpriteValue(uint16_t n, SpriteAttribute t) {
     return 0;
 }
 
+void setSpriteCallback(uint16_t n, SpriteAttribute t, CallBack cb) {
+    if (n >= SPRITE_COUNT)
+        return;
+    switch (t) {
+
+    case S_ON_COLLISION:
+        sprite_table[n].oncollision = cb;
+        return;
+    case S_ON_EXIT_SCREEN:
+        sprite_table[n].onexitscreen = cb;
+        return;
+    default:
+        return;
+    }
+}
 void setSpriteValue(uint16_t n, SpriteAttribute t, int16_t v) {
     if (n >= SPRITE_COUNT)
         return;
@@ -607,12 +805,6 @@ void setSpriteValue(uint16_t n, SpriteAttribute t, int16_t v) {
     case S_GRAVITY:
         sprite_table[n].gravity = v;
         return;
-    case S_ON_COLLISION:
-        sprite_table[n].oncollision = (uint16_t)v;
-        return;
-    case S_ON_EXIT_SCREEN:
-        sprite_table[n].onexitscreen = (uint16_t)v;
-        return;
     case S_IS_SCROLLED:
         if (v != 0)
             sprite_table[n].flags |= 0x02;
@@ -637,6 +829,8 @@ void setSpriteValue(uint16_t n, SpriteAttribute t, int16_t v) {
     case S_COLOR:
         sprite_table[n].flags &= 0x0f;
         sprite_table[n].flags |= (uint8_t)v << 4;
+        return;
+    default:
         return;
     }
 }
@@ -713,7 +907,7 @@ int16_t angleBetweenSprites(uint16_t n1, uint16_t n2) {
     A = (A < 0) ? A + 360 : A;
     return A;
 }
-void setSpr(uint16_t n, uint16_t adr) {
+void setSpr(uint16_t n, char *adr) {
     if (n >= SPRITE_COUNT)
         return;
     sprite_table[n].address = adr;
@@ -1148,8 +1342,9 @@ uint8_t *getTileInXY(int16_t x, int16_t y, uint8_t *collisionMapAdr) {
     p = ((x - tileMap.x) / (int16_t)tileMap.tile_width) +
         ((y - tileMap.y) / (int16_t)tileMap.tile_height *
          (int16_t)tileMap.map_width);
-    if (collisionMapAdr != 0) // This path is only used inside screen.c and the
-                             // return of this path should never be dereferenced
+    if (collisionMapAdr !=
+        0) // This path is only used inside screen.c and the
+           // return of this path should never be dereferenced
         if (collisionMapAdr[p / 8] & (1 << (7 - (p & 7)))) {
             return (uint8_t *)1;
         } else {
@@ -1187,7 +1382,7 @@ static int randomD(int a, int b) {
     return ge0_port_random_min_max(minv, maxv + 1);
 }
 
-static void updateEmitter(void) {
+void updateEmitter(void) {
     int i, n;
     i = emitter.count;
     for (n = 0; n < PARTICLE_COUNT; n++) {

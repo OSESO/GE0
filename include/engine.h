@@ -11,6 +11,7 @@
 // 这个转换到底是什么时候发生的不太清楚
 // 先搁置一下
 typedef int fixed;
+typedef void (*CallBack)(int);
 typedef enum sprite_attr {
     S_X = 0,     // the x co-ordinate
     S_Y,         // the y co-ordinate
@@ -132,8 +133,14 @@ int spritegetvalue(int n, enum sprite_attr type);
 /**
    sets the value denoted by value of the type denoted by type
    for the Sprite denoted by n.
+   use spritesetcallback to set S_ON_EXIT_SCREEN and S_ON_COLLISION
 */
 void spritesetvalue(int n, enum sprite_attr type, int value);
+
+/**
+   set S_ON_COLLISION and S_ON_EXIT_SCREEN for sprite n
+*/
+void spritesetcallback(int n, enum sprite_attr, CallBack cb);
 
 /**
    returns the angle, in degrees, between the two Sprites denoted by n1 & n2.
@@ -146,7 +153,7 @@ int angbetweenspr(int n1, int n2);
    definition) and assigns it to the Sprite denoted by n.
    Maybe this should called setsprite instead
 */
-void getsprite(int n, int address);
+void getsprite(int n, char* address);
 
 /**
    puts the Sprite n at the co-ordinates on the Screen denoted by x & y.

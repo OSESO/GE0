@@ -11,5 +11,8 @@
 
 void setScreenResolution(uint16_t nw, uint16_t nh);
 void redrawScreen(void);
+void redrawSprites(void);
+void drawSprFHLine(int16_t x1, int16_t x2, int16_t y, int8_t c);
+void redrawParticles(void);
 
 #endif

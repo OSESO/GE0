@@ -13,8 +13,17 @@
 
 #define SCREEN_ADDR(x, y) (((y) << 6) + (x))
 
+#define PARTICLE_COUNT 32
+#define SPRITE_COUNT 32
+#define SPRITE_IS_SOLID(a) (sprite_table[a].flags & 1)
+#define SPRITE_IS_SCROLLED(a) (sprite_table[a].flags & 2)
+#define SPRITE_IS_ONEBIT(a) (sprite_table[a].flags & 4)
+#define SPRITE_IS_FLIP_HORIZONTAL(a) (sprite_table[a].flags & 8)
+
+#define SET_LINE_IS_DRAW(a) line_is_draw[(a) >> 5] |= (1 << ((a) & 31))
+extern uint32_t line_is_draw[];
 struct sprite {
-    uint16_t address;
+    char *address;
     int16_t x;
     int16_t y;
     int16_t previousx; // Safe place -- No collision
@@ -30,10 +39,41 @@ struct sprite {
     int8_t collision;
     uint8_t flags; // 8 ~ 4 color 3 fliphorizontal 2 isonebit 1 scrolled 0 solid
     int8_t gravity;
-    uint16_t oncollision;
-    uint16_t onexitscreen;
+    CallBack oncollision;
+    CallBack onexitscreen;
 };
+extern struct sprite sprite_table[];
 
+struct Particle {
+    int8_t gravity;
+    int8_t speedx;
+    int8_t speedy;
+    int8_t color;
+    int16_t time;
+    int16_t x;
+    int16_t y;
+    int8_t size;
+};
+extern struct Particle particles[];
+
+struct Emitter {
+    uint8_t count;
+    int8_t gravity;
+    int8_t color;
+    uint8_t size;
+    int8_t speedx;
+    int8_t speedy;
+    int8_t speedx1;
+    int8_t speedy1;
+    int16_t time;
+    int16_t timer;
+    int16_t timeparticle;
+    int16_t x;
+    int16_t y;
+    int16_t width;
+    int16_t height;
+};
+extern struct Emitter emitter;
 struct TileMap {
     uint8_t **adr;
     /*          tile       tiles
@@ -69,7 +109,9 @@ extern uint8_t sprite_screen[];
 extern uint16_t palette[];
 extern uint16_t sprtpalette[];
 extern int8_t char_x, char_y;
+extern uint8_t timeForRedraw;
 
+void display_init();
 void clearScr(uint8_t p);
 void changePalette(uint8_t n, uint16_t c);
 void setPix(uint16_t x, uint16_t y, uint8_t p);
@@ -83,8 +125,9 @@ void drawImageBit(uint8_t *image, int16_t x1, int16_t y1, int16_t w, int16_t h);
 void drawImgRLE(uint8_t *image, int16_t x1, int16_t y1, int16_t w, int16_t h);
 int16_t getSpriteValue(uint16_t n, SpriteAttribute t);
 void setSpriteValue(uint16_t n, SpriteAttribute t, int16_t v);
+void setSpriteCallback(uint16_t n, SpriteAttribute t, CallBack cb);
 int16_t angleBetweenSprites(uint16_t n1, uint16_t n2);
-void setSpr(uint16_t n, uint16_t adr);
+void setSpr(uint16_t n, char* adr);
 void setSprPosition(uint16_t n, uint16_t x, uint16_t y);
 void spriteSetDirectionAndSpeed(uint16_t n, uint16_t speed, int16_t dir);
 int16_t getSpriteInXY(int16_t x, int16_t y);
@@ -116,4 +159,12 @@ void setEmitterSize(uint8_t width, uint8_t height, uint8_t size);
 void drawParticle(int16_t x, int16_t y, uint8_t color);
 int16_t fixed_cos(int16_t g);
 int16_t fixed_sin(int16_t g);
+
+void clearSpriteScr();
+void moveSprites();
+void testSpriteCollision();
+void updateEmitter(void);
+void largeParticle(int16_t x0, int16_t y0, int16_t r, int8_t c);
+void drawFHLine(int16_t x1, int16_t x2, uint16_t y);
+
 #endif

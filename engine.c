@@ -7,7 +7,6 @@
 
 int8_t color = 1;
 int8_t bgcolor = 0;
-uint8_t timeForRedraw = 48;
 extern uint8_t fixed_res_bit;
 volatile uint8_t thiskey;
 volatile uint16_t timers[8];
@@ -73,10 +72,13 @@ int spritegetvalue(int n, enum sprite_attr type) {
 void spritesetvalue(int n, enum sprite_attr type, int value) {
     setSpriteValue(n, type, value);
 }
+void spritesetcallback(int n, enum sprite_attr type, CallBack cb) {
+    setSpriteCallback(n, type, cb);
+}
 
 int angbetweenspr(int n1, int n2) { return angleBetweenSprites(n1, n2); }
 
-void getsprite(int n, int address) { setSpr(n, address); }
+void getsprite(int n, char* address) { setSpr(n, address); }
 
 void putsprite(int n, int x, int y) {
     setSprPosition(n, x, y);

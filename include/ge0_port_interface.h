@@ -77,28 +77,44 @@ int ge0_port_loaddata(char *name, void *data);
  */
 void ge0_port_noTone(void);
 
-#ifdef MEMORY_BY_GE0
 /**
- * Allocates memory by returning a pointer or 0 if no memory was allocated.
+ * @brief Allocates memory by returning a pointer or 0 if no memory was
+ * allocated.
  * @param size The size of the memory to allocate.
- * @return A pointer to the allocated memory or 0 if allocation failed.
+ * @retval A pointer to the allocated memory or 0 if allocation failed.
  */
 void *ge0_port_malloc(int size);
 
 /**
- * Releases previously allocated memory.
+ * @brief Fill a block of memory with a particular value
+ * @param s the memory to fill
+ * @param c fill byte
+ * @param n number of bytes to fill
+ */
+void *ge0_port_memset(void *s, int c, unsigned int n);
+
+
+/**
+ * @brief Releases previously allocated memory.
  * @param array A pointer to the memory to be freed.
  */
 void ge0_port_free(void *array);
 
 /**
- * Copies the contents of one array to another.
+ * @brief Copies the contents of one array to another.
  * @param array1 The destination array.
  * @param array2 The source array.
  * @param size The number of elements to copy.
  */
 void ge0_port_memcpy(int *array1, int *array2, int size);
 
-#endif
+
+/**
+ * @brief Returns the number of milliseconds passed since boot
+ *
+ * @retval Number of milliseconds passed
+ */
+
+uint32_t ge0_port_millis(void);
 
 #endif // ge0_port_interface_H_
