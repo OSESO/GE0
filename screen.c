@@ -107,7 +107,7 @@ void setPix(uint16_t x, uint16_t y, uint8_t p) {
     if (0) {
         // todo :1484
     } else {
-        if (x < SCREEN_WIDTH && y < SCREEN_HEIGHT) {
+        if (x < GE0_SCREEN_WIDTH && y < GE0_SCREEN_HEIGHT) {
             x_index = x >> 1;
             orig = screen[SCREEN_ADDR(x_index, y)];
             if (x & 1)
@@ -123,8 +123,8 @@ void setPix(uint16_t x, uint16_t y, uint8_t p) {
 }
 
 void clearScr(uint8_t p) {
-    for (uint16_t y = 0; y < SCREEN_HEIGHT; y++) {
-        for (uint16_t x = 0; x < SCREEN_WIDTH; x++) {
+    for (uint16_t y = 0; y < GE0_SCREEN_HEIGHT; y++) {
+        for (uint16_t x = 0; x < GE0_SCREEN_WIDTH; x++) {
             setPix(x, y, p);
         }
     }
@@ -135,8 +135,8 @@ void clearScr(uint8_t p) {
 void changePalette(uint8_t n, uint16_t c) {
     if (n < 16) {
         palette[n] = c;
-        for (uint8_t y = 0; y < 128; y++) {
-            for (uint8_t x = 0; x < 64; x++) { // todo: Why x here is 64?
+        for (uint8_t y = 0; y < GE0_SCREEN_HEIGHT; y++) {
+            for (uint8_t x = 0; x < SCREEN_WIDTH_BYTES; x++) {
                 if (((screen[SCREEN_ADDR(x, y)] & 0xf0) >> 4) == n ||
                     (screen[SCREEN_ADDR(x, y)] & 0x0f) == n)
                     SET_LINE_IS_DRAW(y);
