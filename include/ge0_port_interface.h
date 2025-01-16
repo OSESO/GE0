@@ -78,6 +78,11 @@ int ge0_port_loaddata(char *name, void *data);
 void ge0_port_noTone(void);
 
 /**
+ * @brief Generates a  wave of the specified frequency with duration
+ */
+void ge0_port_tone(int freq, short duration);
+
+/**
  * @brief Allocates memory by returning a pointer or 0 if no memory was
  * allocated.
  * @param size The size of the memory to allocate.
@@ -93,7 +98,6 @@ void *ge0_port_malloc(int size);
  */
 void *ge0_port_memset(void *s, int c, unsigned int n);
 
-
 /**
  * @brief Releases previously allocated memory.
  * @param array A pointer to the memory to be freed.
@@ -107,7 +111,6 @@ void ge0_port_free(void *array);
  * @param size The number of elements to copy.
  */
 void ge0_port_memcpy(int *array1, int *array2, int size);
-
 
 /**
  * @brief Returns the number of milliseconds passed since boot

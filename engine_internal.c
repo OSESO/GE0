@@ -12,6 +12,7 @@ uint32_t redraw;
 uint8_t fps;
 
 extern volatile uint8_t thiskey;
+extern volatile uint16_t timers[8];
 
 void screen_worker(void) {
     while (1) {
@@ -43,9 +44,26 @@ void key_worker(void) {
     }
 }
 
-void game_logic_worker() {
+void game_logic_worker(void) {
     user_main();
     while (1) {
         DELAY(1000);
     }
+}
+
+void sound_worker(void) {
+    while (1) {
+        DELAY(1);
+        if (delay_rtttl <= 0)
+            delay_rtttl = playRtttl();
+    }
+}
+
+void timer_tick(void) {
+    for (int16_t i = 0; i < 8; i++) {
+        if (timers[i] >= 1)
+            timers[i]--;
+    }
+    delay_rtttl--;
+    updateRtttl();
 }
