@@ -9,7 +9,6 @@
 #define SCREEN_WIDTH_BYTES 64
 
 #define SCREEN_SIZE (SCREEN_HEIGHT * SCREEN_WIDTH_BYTES)
-#define SCREEN_ARRAY_DEF SCREEN_SIZE
 
 #define SCREEN_ADDR(x, y) (((y) << 6) + (x))
 

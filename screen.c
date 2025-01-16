@@ -14,10 +14,9 @@
  * │    0    │    1    │
  * └─────────┴─────────┘
  */
-uint8_t
-    screen[SCREEN_ARRAY_DEF * sizeof(uint8_t)]; // Each pixel usse 4 bit, which
-                                                // point to a palette index
-uint8_t sprite_screen[SCREEN_ARRAY_DEF * sizeof(uint8_t)];
+uint8_t screen[SCREEN_SIZE]; // Each pixel usse 4 bit, which
+                             // point to a palette index
+uint8_t sprite_screen[SCREEN_SIZE];
 uint32_t line_is_draw[4]; // Keep whether the line is changed since the last
                           // redraw Each bit represents one line
 // todo: change 'draw' to 'drawn'
@@ -127,7 +126,6 @@ void clearSpriteScr() {
             if (*((uint32_t *)&sprite_screen[SCREEN_ADDR(x, y)]) > 0)
                 SET_LINE_IS_DRAW(y);
         }
-    // FIXME: sprite_screen到底是多大？
     ge0_port_memset(sprite_screen, 0, SCREEN_SIZE);
 }
 
