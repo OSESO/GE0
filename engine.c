@@ -78,7 +78,7 @@ void spritesetcallback(int n, enum sprite_attr type, CallBack cb) {
 
 int angbetweenspr(int n1, int n2) { return angleBetweenSprites(n1, n2); }
 
-void getsprite(int n, char* address) { setSpr(n, address); }
+void getsprite(int n, char *address) { setSpr(n, address); }
 
 void putsprite(int n, int x, int y) {
     setSprPosition(n, x, y);
@@ -127,15 +127,12 @@ int puts(char *message) {
     return 0;
 }
 
-// FIXME: Klib hack. Get rid of it.
-int klib__itoa(int num, char *str, int radix);
-#define itoa klib__itoa
 int putn(int number) {
     char s_buffer[7];
     if (number < 32768) {
-        itoa(number, s_buffer, 10);
+        ge0_port_itoa(number, s_buffer, 10);
     } else {
-        itoa(number - 0x10000, s_buffer, 10);
+        ge0_port_itoa(number - 0x10000, s_buffer, 10);
     }
     int j = 0;
     while (s_buffer[j]) {
@@ -160,7 +157,7 @@ void printfix(int16_t value) {
     value &= fractPartMask;
 
     // преобразуем целую часть
-    itoa(intPart, sbuffer, 10);
+    ge0_port_itoa(intPart, sbuffer, 10);
     j = 0;
     while (sbuffer[j]) {
         printc(sbuffer[j]);

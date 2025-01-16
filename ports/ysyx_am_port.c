@@ -78,6 +78,9 @@ int ge0_port_get_key(void) {
     return ret;
 }
 
+int ge0_port_itoa(int num, char *str, int radix) {
+    return klib__itoa(num, str, radix);
+}
 #ifdef MEMORY_BY_GE0
 
 void *ge0_port_malloc(int size) { return malloc(size); }

@@ -120,4 +120,9 @@ void ge0_port_memcpy(int *array1, int *array2, int size);
 
 uint32_t ge0_port_millis(void);
 
+/**
+ * @brief just itoa
+ */
+int ge0_port_itoa(int num, char *str, int radix);
+
 #endif // ge0_port_interface_H_
