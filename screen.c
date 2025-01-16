@@ -285,8 +285,20 @@ void setPix(uint16_t x, uint16_t y, uint8_t p) {
     uint16_t x_index;  // Each unit in screen[] represents TWO pixel
     uint8_t orig, new; // This function changes ONE pixel at a time.
                        // orig is used to keep the other half bit
-    if (0) {
-        // todo :1484
+    uint16_t b, n;
+    if (isClip) {
+        if (x < clipx1 && x >= clipx0 && y < clipy1 && y >= clipy0) {
+            x_index = x >> 1;
+            b = screen[SCREEN_ADDR(x_index, y)];
+            if (x & 1)
+                n = (b & 0xf0) + p;
+            else
+                n = (b & 0x0f) + (p << 4);
+            if (b != n) {
+                SET_LINE_IS_DRAW(y);
+                screen[SCREEN_ADDR(x_index, y)] = n;
+            }
+        }
     } else {
         if (x < SCREEN_WIDTH && y < SCREEN_HEIGHT) {
             x_index = x >> 1;
